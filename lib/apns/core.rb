@@ -70,21 +70,17 @@ module APNS
     return self.has_connection?(self.host, self.port)
   end
 
-  def self.send_notification(device_token, message)
+  def self.send_notification(device_token, message, notification_id = rand(9999), expiry = (Time.now + 1.year))
     self.with_notification_connection do |conn|
-      conn.write(self.packaged_notification(device_token, message))
+      conn.write(self.packaged_notification(device_token, message, notification_id, expiry))
       conn.flush
     end
   end
   
   def self.send_notifications(notifications)
-    notifications.each do |n|
-      self.packaged_notification(n[0], n[1])
-    end
-
     self.with_notification_connection do |conn|
       notifications.each do |n|
-        conn.write(self.packaged_notification(n[0], n[1]))
+        conn.write(self.packaged_notification(n[0], n[1], (n[2] or rand(9999)), (n[3] or (Time.now + 1.year))))
       end
       conn.flush
     end
@@ -119,11 +115,12 @@ module APNS
     {:feedback_at => Time.at(feedback[0]), :length => feedback[1], :device_token => feedback[2] }
   end
 
-  def self.packaged_notification(device_token, message)
+  def self.packaged_notification(device_token, message, identifier, expiry)
     pt = self.packaged_token(device_token)
     pm = self.packaged_message(message)
     puts "[APNS] sending notification to device:[#{device_token}] payload-size:(#{pm.length}) payload:#{pm}" if @logging
-    [0, 32, pt, pm.size, pm].pack("cs>a*s>a*")
+    #[0, 32, pt, pm.size, pm].pack("cs>a*s>a*") # old format
+    [1, identifier.to_i, expiry.to_i, 32, pt, pm.size, pm].pack("cl>l>s>a*s>a*")
   end
   
   def self.packaged_token(device_token)
