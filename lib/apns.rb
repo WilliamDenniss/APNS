@@ -21,5 +21,6 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
  
+require 'apns/truncate'
 require 'apns/core'
 require 'apns/notification'

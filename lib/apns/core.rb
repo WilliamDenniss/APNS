@@ -1,4 +1,4 @@
-# Copyright (c) 2009 James Pozdena, 2010 Justin.tv
+# Copyright (c) 2009 James Pozdena, 2010 Justin.tv, 2013 William Denniss
 #  
 # Permission is hereby granted, free of charge, to any person
 # obtaining a copy of this software and associated documentation
@@ -45,8 +45,14 @@ module APNS
   @cache_connections = false
   @connections = {}
 
+  @truncate_mode = Truncate::TRUNCATE_METHOD_SOFT
+  @truncate_max_chopped = 10
+  @clean_whitespace = true
+  
+  @logging = true
+
   class << self
-    attr_accessor :host, :port, :feedback_host, :feedback_port, :pem, :pass, :cache_connections
+    attr_accessor :host, :port, :feedback_host, :feedback_port, :pem, :pass, :cache_connections, :clean_whitespace, :truncate_mode, :truncate_max_chopped, :logging
   end
 
   def self.establish_notification_connection
@@ -72,6 +78,10 @@ module APNS
   end
   
   def self.send_notifications(notifications)
+    notifications.each do |n|
+      self.packaged_notification(n[0], n[1])
+    end
+
     self.with_notification_connection do |conn|
       notifications.each do |n|
         conn.write(self.packaged_notification(n[0], n[1]))
@@ -112,6 +122,7 @@ module APNS
   def self.packaged_notification(device_token, message)
     pt = self.packaged_token(device_token)
     pm = self.packaged_message(message)
+    puts "[APNS] sending notification to device:[#{device_token}] payload-size:(#{pm.length}) payload:#{pm}" if @logging
     [0, 0, 32, pt, 0, pm.size, pm].pack("ccca*cca*")
   end
   
@@ -127,6 +138,7 @@ module APNS
     else
       raise "Message needs to be either a hash or string"
     end
+    hash = Truncate.truncate_notification(hash, @clean_whitespace, @truncate_mode, @truncate_max_chopped)
     JSON.generate(hash, :ascii_only => true)
   end
   
