@@ -121,12 +121,13 @@ module APNS
   
   def self.packaged_message(message)
     if message.is_a?(Hash)
-      message.to_json(:ascii_only => true)
+      hash = message
     elsif message.is_a?(String)
-      '{"aps":{"alert":"'+ message + '"}}'
+      hash = {:aps => {:alert => message } }
     else
       raise "Message needs to be either a hash or string"
     end
+    JSON.generate(hash, :ascii_only => true)
   end
   
   def self.with_notification_connection(&block)

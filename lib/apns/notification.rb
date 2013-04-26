@@ -32,7 +32,7 @@ module APNS
       aps['aps']['badge'] = self.badge if self.badge
       aps['aps']['sound'] = self.sound if self.sound
       aps.merge!(self.other) if self.other
-      aps.to_json(:ascii_only => true)
+      JSON.generate(aps, :ascii_only => true)
     end
     
   end
