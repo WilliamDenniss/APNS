@@ -27,7 +27,7 @@ module APNS
     TRUNCATE_METHOD_SOFT = 'soft'
     TRUNCATE_METHOD_HARD = 'hard'
   
-    NOTIFICATION_MAX_BYTE_SIZE = 255 # the docs claim 256, but in my testing only payloads of length 255 or less work
+    NOTIFICATION_MAX_BYTE_SIZE = 256
   
     # calculates the byte-length of an object when encoded with APNS friendly JSON encoding (i.e. ascii-only)
     def self.json_byte_length(object)
@@ -53,7 +53,7 @@ module APNS
         oversize_by = json_byte_length(notification) - NOTIFICATION_MAX_BYTE_SIZE
         message_target_byte_size = json_byte_length(notification[:aps][:alert]) - oversize_by
 
-        notification[:aps][:alert] = truncate_string(notification[:aps][:alert], message_target_byte_size)
+        notification[:aps][:alert] = truncate_string(notification[:aps][:alert], message_target_byte_size, truncate_mode, truncate_soft_max_chopped)
       end
       
       return notification

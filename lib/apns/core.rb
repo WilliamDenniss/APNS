@@ -123,7 +123,7 @@ module APNS
     pt = self.packaged_token(device_token)
     pm = self.packaged_message(message)
     puts "[APNS] sending notification to device:[#{device_token}] payload-size:(#{pm.length}) payload:#{pm}" if @logging
-    [0, 0, 32, pt, 0, pm.size, pm].pack("ccca*cca*")
+    [0, 32, pt, pm.size, pm].pack("cs>a*s>a*")
   end
   
   def self.packaged_token(device_token)
