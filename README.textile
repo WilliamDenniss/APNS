@@ -1,8 +1,13 @@
-h1. JTV-APNS
+h1. gs-apns
 
-Jtv-apns is a gem for accessing the Apple Push Notification Service that allows
+gs-apns is a gem for accessing the Apple Push Notification Service that allows
 both sending notifications and reading from apple's feedback service. This gem
-is based heavily on the work of James Pozdena (http://github.com/jpoz/APNS).
+is based heavily on the work of James Pozdena (http://github.com/jpoz/APNS) and
+"Paul Gebheim" (http://github.com/jpoz/APNS).
+
+Updates by William Denniss of Geospike: Apple's APNS service does not support JSON that isn't ascii encoded. Prior to rails 3.2.13
+it was encoded, but now it isn't.
+
 
 h2. Install
 

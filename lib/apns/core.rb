@@ -121,7 +121,7 @@ module APNS
   
   def self.packaged_message(message)
     if message.is_a?(Hash)
-      message.to_json
+      message.to_json(:ascii_only => true)
     elsif message.is_a?(String)
       '{"aps":{"alert":"'+ message + '"}}'
     else

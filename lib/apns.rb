@@ -22,3 +22,4 @@
 # OTHER DEALINGS IN THE SOFTWARE.
  
 require 'apns/core'
+require 'apns/notification'
