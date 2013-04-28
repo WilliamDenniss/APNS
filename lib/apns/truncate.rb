@@ -22,6 +22,7 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 
 module APNS
+
   class Truncate
 
     TRUNCATE_METHOD_SOFT = 'soft'
@@ -29,29 +30,29 @@ module APNS
   
     NOTIFICATION_MAX_BYTE_SIZE = 256
   
-    # calculates the byte-length of an object when encoded with APNS friendly JSON encoding (i.e. ascii-only)
-    def self.json_byte_length(object)
-      if object.is_a?(Hash) || object.is_a?(Array)
-        return JSON.generate(object, :ascii_only => true).length
-      else object.is_a?(String)
-        # wraps string in an array but discounts the extra chars
-        return JSON.generate([object], :ascii_only => true).length - 4
-      end
-    end
-    
     # forces a notification to fit within Apple's payload limits by truncating the message as required
     def self.truncate_notification(notification, clean_whitespace = true, truncate_mode = TRUNCATE_METHOD_SOFT, truncate_soft_max_chopped = 10)
-    
+      
+      raise ArgumentError, "notification is not a hash" unless notification.is_a?(Hash)
+      raise ArgumentError, "notification hash should contain :aps key" unless notification[:aps]
+      
       return notification if !notification[:aps][:alert] || notification[:aps][:alert] == ""
       
       # cleans up whitespace
       notification[:aps][:alert].gsub!(/([\s])+/, " ") if clean_whitespace
                 
       # wd: trims the notification payload to fit in 255 bytes
-      if json_byte_length(notification) > NOTIFICATION_MAX_BYTE_SIZE
+      if ApnsJSON.apns_json_size(notification) > NOTIFICATION_MAX_BYTE_SIZE
 
-        oversize_by = json_byte_length(notification) - NOTIFICATION_MAX_BYTE_SIZE
-        message_target_byte_size = json_byte_length(notification[:aps][:alert]) - oversize_by
+        oversize_by = ApnsJSON.apns_json_size(notification) - NOTIFICATION_MAX_BYTE_SIZE
+        message_target_byte_size = ApnsJSON.apns_json_size(notification[:aps][:alert]) - oversize_by
+
+        if message_target_byte_size < 0
+          raise TrucateException, "notification does not fit within 256 byte limit even by if the message was completely truncated"
+        end
+        if message_target_byte_size == 0
+          raise TrucateException, "notification would only fit within 256 byte limit by completely truncating the message which changes the presentation in iOS"
+        end
 
         notification[:aps][:alert] = truncate_string(notification[:aps][:alert], message_target_byte_size, truncate_mode, truncate_soft_max_chopped)
       end
@@ -60,32 +61,46 @@ module APNS
     end
     
     # truncates a string to a given byte size
-    def self.truncate_string(string, target_byte_size, truncate_mode = TRUNCATE_METHOD_SOFT, truncate_soft_max_chopped = 10, ellipsis = "\u2026", truncate_soft_regex = /\s/)
-    
-      return string if json_byte_length(string) <= target_byte_size
-      
-      target_byte_size -= json_byte_length(ellipsis)
+    def self.truncate_string(input_string, target_byte_size, truncate_mode = TRUNCATE_METHOD_SOFT, truncate_soft_max_chopped = 10, ellipsis = "\u2026", truncate_soft_regex = /\s/)
 
-      if truncate_mode == TRUNCATE_METHOD_SOFT
-        target_byte_size += 1 # allows one extra byte in case the string ended on a space, will be chopped off later
+      raise ArgumentError, "Cannot truncate string to a negative number" if target_byte_size < 0 
+      
+      return input_string if ApnsJSON.apns_json_size(input_string) <= target_byte_size
+      
+      # if the target size is below the size of the ellipsis, reverts to a hard-truncate with no ellipsis
+      if target_byte_size < ApnsJSON.apns_json_size(ellipsis)
+        truncate_mode = TRUNCATE_METHOD_HARD
+        ellipsis = ''
       end
 
+      # reduces target-size by the ellipsis size
+      target_byte_size -= ApnsJSON.apns_json_size(ellipsis)
+
       # starts with a string length equal to the target number bytes (which for an ASCII-only string is the final string)
-      string = string[0,target_byte_size]
-      # chops off characters one at a time until the byte-size is within our target size, to handle multi-byte char strings
-      while json_byte_length(string) > target_byte_size
+      string = input_string[0,target_byte_size]
+      
+      # chops off characters one at a time until the byte-size is within our target size, to handle variable-byte char strings
+      while ApnsJSON.apns_json_size(string) > target_byte_size
         string = string[0,string.length-1]
       end
       
+      # further truncates string on whitespace boundaries
       if truncate_mode == TRUNCATE_METHOD_SOFT
-        # trims to before last space character for a nicer result, or length less one byte to match if no strings or the chopped chars exceed our threshold (the latter threshold should prevent scripts that don't use spaces getting too truncated)
-        trim_index = string.rindex(/\s/)
-        trim_index = string.length-1 if !trim_index || string.length - trim_index > truncate_soft_max_chopped
-        string = string[0,trim_index]
+      
+        string = input_string[0, string.length+1] # elongates string by 1 character in case it happens to be whitespace
+        trim_to_index = string.rindex(/\s/) # sets trim index to be last whitespace character
+        if !trim_to_index || (string.length - trim_to_index) > truncate_soft_max_chopped
+          trim_to_index = string.length-1 # cancels soft-truncate if no whitespace, or too much would be chopped
+        end
+        
+        string = string[0,trim_to_index]
       end
+
+      string = '' if string.nil?  # if string is nil, it was entirely truncated
       
       return string + ellipsis
     end
     
   end
+
 end

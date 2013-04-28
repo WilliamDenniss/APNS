@@ -1,4 +1,4 @@
-# Copyright (c) 2009 James Pozdena, 2010 Justin.tv
+# Copyright (c) 2013 William Denniss
 #  
 # Permission is hereby granted, free of charge, to any person
 # obtaining a copy of this software and associated documentation
@@ -20,8 +20,28 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
- 
-require 'apns/exceptions'
-require 'apns/apns_json'
-require 'apns/truncate'
-require 'apns/core'
+
+module APNS
+  require 'json'
+
+    class ApnsJSON
+    
+      # generates JSON in a format acceptable to the APNS service (which is a subset of the JSON standard)
+      def self.apns_json(object)
+
+        JSON.generate(object, :ascii_only => true)
+      end
+
+      # calculates the byte-length of an object when encoded with APNS friendly JSON encoding
+      # if a string is passed, the byte-size is calculated as if it were in an object structure
+      def self.apns_json_size(object)
+
+        if object.is_a?(Hash) || object.is_a?(Array)
+          return apns_json(object).length
+        else object.is_a?(String)
+          # wraps string in an array but discounts the extra chars
+          return apns_json([object]).length - 4
+        end
+      end
+    end
+end

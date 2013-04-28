@@ -24,8 +24,7 @@
 module APNS
   require 'socket'
   require 'openssl'
-  require 'json'
-
+  
   # Host for push notification service
   # production: gateway.push.apple.com
   # development: gateway.sandbox.apple.com
@@ -98,7 +97,7 @@ module APNS
     
     return apns_feedback
   end
-
+  
   protected
 
   # Each tuple is in the following format:
@@ -118,11 +117,13 @@ module APNS
   def self.packaged_notification(device_token, message, identifier, expiry)
     pt = self.packaged_token(device_token)
     pm = self.packaged_message(message)
+    raise APNSException, "payload exceeds 256 byte limit" if pm.size > 256
+
     #return [0, 32, pt, pm.size, pm].pack("cna*na*") # old format (NB. s> notation only compatible with ruby 1.9.3 and above)
 
     expiry_unix = expiry.to_i
     expiry_unix = 0 if expiry_unix < 0 # for APNS a zero timestamp has the same effect as a negative one and we are only encoding signed ints 
-    puts "[APNS] sending notification to device:[#{device_token}] identifier:#{identifier} expiry:#{expiry_unix} payload-size:(#{pm.length}) payload:#{pm}" if @logging
+    puts "[APNS] packaging notification for device:[#{device_token}] identifier:#{identifier} expiry:#{expiry_unix} payload-size:(#{pm.length}) payload:#{pm}" if @logging
     [1, identifier.to_i, expiry_unix, 32, pt, pm.size, pm].pack("cNNna*na*")
   end
   
@@ -139,7 +140,7 @@ module APNS
       raise "Message needs to be either a hash or string"
     end
     hash = Truncate.truncate_notification(hash, @clean_whitespace, @truncate_mode, @truncate_max_chopped)
-    JSON.generate(hash, :ascii_only => true)
+    ApnsJSON.apns_json(hash)
   end
   
   def self.with_notification_connection(&block)
@@ -249,4 +250,5 @@ module APNS
       end
     end
   end
+  
 end
