@@ -41,22 +41,22 @@ describe APNS::Truncate do
       # string sizes
       ApnsJSON.apns_json_size("1").should == 1
       ApnsJSON.apns_json_size("12").should == 2
-      ApnsJSON.apns_json_size("\u2026").should == 6
-      ApnsJSON.apns_json_size("\u{1F511}").should == 12
+      ApnsJSON.apns_json_size("\u2026").should == 3
+      ApnsJSON.apns_json_size("\u{1F511}").should == 4
 
       # object sizes
       ApnsJSON.apns_json_size(["1"]).should == 1+4
       ApnsJSON.apns_json_size(["12"]).should == 2+4
-      ApnsJSON.apns_json_size(["\u2026"]).should == 6+4
-      ApnsJSON.apns_json_size(["\u{1F511}"]).should == 12+4
+      ApnsJSON.apns_json_size(["\u2026"]).should == 3+4
+      ApnsJSON.apns_json_size(["\u{1F511}"]).should == 4+4
     end
   end
   
   describe '#truncate_string' do
 
     it "should handle byte-sizes smaller than the ellipsis size" do
-      s = Truncate.truncate_string(STRING_1TO9, 4)
-      s.should == "1234"
+      s = Truncate.truncate_string(STRING_1TO9, 2)
+      s.should == "12"
     end
 
     it "should handle byte-sizes equal to the ellipsis size" do
@@ -78,21 +78,21 @@ describe APNS::Truncate do
     it "should soft truncate stirngs to equal or below requested size #2" do
     
       s = Truncate.truncate_string(STRING_QBF, 8)
-      s.length.should <= 8
+      s.bytesize.should <= 8
 
       s = Truncate.truncate_string(STRING_CHINESE, 8)
-      s.length.should <= 8
+      s.bytesize.should <= 8
 
       s = Truncate.truncate_string(STRING_QBF, 35)
-      s.length.should <= 35
+      s.bytesize.should <= 35
 
       s = Truncate.truncate_string(STRING_CHINESE, 35)
-      s.length.should <= 35
+      s.bytesize.should <= 35
     end
     
     it "should hard-truncate to the exact str length" do
       s = Truncate.truncate_string(STRING_QBF, 8, Truncate::TRUNCATE_METHOD_HARD, 0, '.')
-      s.length.should == 8
+      s.bytesize.should == 8
     end
 
     it "should soft-truncate on word boundaries" do
@@ -107,7 +107,7 @@ describe APNS::Truncate do
 
     it "soft truncate should handle strings with no spaces by reverting to hard-truncate" do
       s = Truncate.truncate_string(STRING_1TO9, 8, Truncate::TRUNCATE_METHOD_SOFT, 10, '.')
-      s.length.should == 8
+      s.bytesize.should == 8
     end
 
     it "soft truncate should handle unicode strings" do
@@ -140,15 +140,15 @@ describe APNS::Truncate do
     it "should truncate notification to size" do
       notification = {:aps => {:alert => LONG_MESSAGE_QBF, :badge => '1', :sound => 'default'}, :server_info => {:type => 'example', :data => 12345, :something => 'blar'}}
       Truncate.truncate_notification(notification)
-      ApnsJSON.apns_json(notification).length.should <= 256
+      ApnsJSON.apns_json(notification).bytesize.should <= 256
 
       notification = {:aps => {:alert => LONG_MESSAGE_CHINESE, :badge => '1', :sound => 'default'}, :server_info => {:type => 'example', :data => 12345, :something => 'blar'}}
       Truncate.truncate_notification(notification)
-      ApnsJSON.apns_json(notification).length.should <= 256
+      ApnsJSON.apns_json(notification).bytesize.should <= 256
      
       notification = {:aps => {:alert => LONG_MESSAGE_QBF, :badge => '1', :sound => 'default'}, :server_info => {:type => 'example', :data => 12345, :something => 'blar'}}
       Truncate.truncate_notification(notification, true, truncate_mode = Truncate::TRUNCATE_METHOD_HARD)
-      ApnsJSON.apns_json(notification).length.should == 256
+      ApnsJSON.apns_json(notification).bytesize.should == 256
     end
     
     it "should throw exception if the notification cannot be truncated" do

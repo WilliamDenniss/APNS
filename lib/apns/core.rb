@@ -117,14 +117,14 @@ module APNS
   def self.packaged_notification(device_token, message, identifier, expiry)
     pt = self.packaged_token(device_token)
     pm = self.packaged_message(message)
-    raise APNSException, "payload exceeds 256 byte limit" if pm.size > 256
+    raise APNSException, "payload exceeds 256 byte limit" if pm.bytesize > 256
 
-    #return [0, 32, pt, pm.size, pm].pack("cna*na*") # old format (NB. s> notation only compatible with ruby 1.9.3 and above)
+    #return [0, 32, pt, pm.bytesize, pm].pack("cna*na*") # old format (NB. s> notation only compatible with ruby 1.9.3 and above)
 
     expiry_unix = expiry.to_i
     expiry_unix = 0 if expiry_unix < 0 # for APNS a zero timestamp has the same effect as a negative one and we are only encoding signed ints 
-    puts "[APNS] packaging notification for device:[#{device_token}] identifier:#{identifier} expiry:#{expiry_unix} payload-size:(#{pm.length}) payload:#{pm}" if @logging
-    [1, identifier.to_i, expiry_unix, 32, pt, pm.size, pm].pack("cNNna*na*")
+    puts "[APNS] packaging notification for device:[#{device_token}] identifier:#{identifier} expiry:#{expiry_unix} payload-size:(#{pm.bytesize}) payload:#{pm}" if @logging
+    [1, identifier.to_i, expiry_unix, 32, pt, pm.bytesize, pm].pack("cNNna*na*")
   end
   
   def self.packaged_token(device_token)

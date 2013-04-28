@@ -29,7 +29,7 @@ module APNS
       # generates JSON in a format acceptable to the APNS service (which is a subset of the JSON standard)
       def self.apns_json(object)
 
-        JSON.generate(object, :ascii_only => true)
+        JSON.generate(object, :ascii_only => false)
       end
 
       # calculates the byte-length of an object when encoded with APNS friendly JSON encoding
@@ -37,10 +37,10 @@ module APNS
       def self.apns_json_size(object)
 
         if object.is_a?(Hash) || object.is_a?(Array)
-          return apns_json(object).length
+          return apns_json(object).bytesize
         else object.is_a?(String)
           # wraps string in an array but discounts the extra chars
-          return apns_json([object]).length - 4
+          return apns_json([object]).bytesize - 4
         end
       end
     end

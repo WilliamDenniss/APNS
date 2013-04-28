@@ -28,19 +28,19 @@ describe APNS do
   it "should encode unicode to ascii-only json" do
     string = "\u2601"
     json = ApnsJSON.apns_json([string])
-    json.should == "[\"\\u2601\"]"
+    json.should == "[\"\u2601\"]"
   end
 
   it "should encode 5-byte unicode to JSON in an apple safe manner" do
     string = "\u{1F511}"
     json = ApnsJSON.apns_json([string])
-    json.should == "[\"\\ud83d\\udd11\"]"
+    json.should == "[\"\u{1F511}\"]"
   end
   
   it "should return JSON escaped" do
     n = {:aps => {:alert => "\u2601Hello iPhone", :badge => 3, :sound => 'awesome.caf'}}
     json = ApnsJSON.apns_json(n)
-    json.should  == "{\"aps\":{\"alert\":\"\\u2601Hello iPhone\",\"badge\":3,\"sound\":\"awesome.caf\"}}"
+    json.should  == "{\"aps\":{\"alert\":\"\u2601Hello iPhone\",\"badge\":3,\"sound\":\"awesome.caf\"}}"
   end
   
   it "should throw exception if payload is too big" do
