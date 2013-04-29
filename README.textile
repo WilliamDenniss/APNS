@@ -88,6 +88,29 @@ APNS.pass = 'xxxx'
 
 # (default: false)
 # APNS.cache_connections = true
+
+#######################
+# Message trunctation
+#######################
+
+# soft (word break), or hard truncation (default: Truncate::TRUNCATE_METHOD_SOFT).
+APNS.truncate_mode = Truncate::TRUNCATE_METHOD_HARD
+
+# for soft truncation, the maximum number of characters that will be chopped (default: 10)
+APNS.truncate_max_chopped = 20
+
+# if true (default: true), replaces all whitespace characters with spaces. 
+# e.g. '\n' becomes a single space. '\n\t\n \n' becomes a single space.
+APNS.clean_whitespace = false
+
+
+#######################
+# Message trunctation
+#######################
+
+# if true (default: true), will output 1 log message every time a message is sent to the APNS service
+APNS.logging = false
+
 </pre>
 
 h2. Example (Single notification):
