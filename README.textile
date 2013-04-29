@@ -1,19 +1,35 @@
 h1. gs-apns
 
-gs-apns is a gem for accessing the Apple Push Notification Service that allows
-both sending notifications and reading from apple's feedback service. This gem
-is based heavily on the work of James Pozdena (http://github.com/jpoz/APNS) and
-"Paul Gebheim" (http://github.com/jpoz/APNS).
+gs-apns is a gem for accessing the Apple Push Notification Service that allows both sending notifications and reading from apple's feedback service. This gem extends on the prior work of "James Pozdena":http://github.com/jpoz/APNS and "Paul Gebheim":http://github.com/jpoz/APNS.
 
-Updates by William Denniss of Geospike: Apple's APNS service does not support JSON that isn't ascii encoded. Prior to rails 3.2.13
-it was encoded, but now it isn't.
+Improvements in *gs-apns*, by William Denniss of "Geospike":http://geospike.com/ :
+
+# Automatic truncation of messages to fit within the 256 byte limit, and an exception thrown if the server payload is too big (better than dying silently)
+# Truncation can truncate on word or character boundaries, and UTF-8 is fully supported (specifically, Chinese/Japanese character messages are supported)
+# JSON generation uses the JSON gem directly rather than to_json which is overridden by Rails with the potential for "bugs to be introduced":http://omegadelta.net/2013/04/28/changes-to-how-rails-3-2-13-and-4-0-encodes-unicode-in-json/ .
+# Uses Apple's new 'enhanced' notification protocol allowing for an expiration date to be sent on notifications
+# All 256 of available notification payload can be used (jtv-apns & apns are currently limited to 255)
 
 
 h2. Install
 
 <pre>
-sudo gem install jtv-apns
+sudo gem install gs-apns
 </pre>
+
+h3. Gemfile
+
+<pre>
+gem "gs-apns", "~> 0.2.0"
+</pre>
+
+Bleeding edge:
+
+<pre>
+gem 'gs-apns', :git => 'git://github.com/WilliamDenniss/APNS.git'
+</pre>
+
+
 
 h2. Setup:
 
@@ -23,11 +39,12 @@ certificate, and select File -> Export from your keychain. By default a .p12
 file will be generated containing certificate and key.
 
 Next, run the following command to convert this .p12 file into a .pem file.
+
 <pre>
 openssl pkcs12 -in cert.p12 -out cert.pem -nodes -clcerts
 </pre>
 
-This pem file should be stored somewhere secure that your application can access. Next, set the jtv-apns configuration parameters:
+This pem file should be stored somewhere secure that your application can access. Next, set the configuration parameters:
 
 <pre>
 ###################
@@ -122,7 +139,7 @@ end
 
 h2. Accessing the feedback service
 
-jtv-apns provides a simple api to access Apple's feedback service. Below is an example for setting the feedback time on an ActiveRecord object corresponding to a device token.
+gs-apns provides a simple api to access Apple's feedback service. Below is an example for setting the feedback time on an ActiveRecord object corresponding to a device token.
 
 <pre>
 # APNS.feedback_each returns an array of Hash objects with the following keys
@@ -146,7 +163,7 @@ ApplicationAppDelegate.m
 - (void)applicationDidFinishLaunching:(UIApplication *)application {    
     // Register with apple that this app will use push notification
     [[UIApplication sharedApplication] registerForRemoteNotificationTypes:(UIRemoteNotificationTypeAlert | 
-      UIRemoteNotificationTypeSound | UIRemoteNotificationTypeBadge)];	
+      UIRemoteNotificationTypeSound | UIRemoteNotificationTypeBadge)];                                     
 }
 
 - (void)application:(UIApplication *)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken {
@@ -155,4 +172,12 @@ ApplicationAppDelegate.m
 }
 </pre>
     
+h2. Test Cases
 
+Execute:
+
+<pre>
+bundle exec rspec spec
+</pre>
+
+To run all the rspec test-cases.
