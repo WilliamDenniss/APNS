@@ -45,13 +45,15 @@ module APNS
   @connections = {}
 
   @truncate_mode = Truncate::TRUNCATE_METHOD_SOFT
-  @truncate_max_chopped = 10
-  @clean_whitespace = true
+  @truncate_soft_max_chopped = 15
+  @truncate_ellipsis_str = "\u2026"
+
+  @message_clean_whitespace = false
   
   @logging = true
 
   class << self
-    attr_accessor :host, :port, :feedback_host, :feedback_port, :pem, :pass, :cache_connections, :clean_whitespace, :truncate_mode, :truncate_max_chopped, :logging
+    attr_accessor :host, :port, :feedback_host, :feedback_port, :pem, :pass, :cache_connections, :message_clean_whitespace, :truncate_mode, :truncate_soft_max_chopped, :truncate_ellipsis_str, :logging
   end
 
   def self.establish_notification_connection
@@ -73,6 +75,7 @@ module APNS
     self.with_notification_connection do |conn|
       conn.write(self.packaged_notification(device_token, message, notification_id, expiry))
       conn.flush
+      puts "[APNS] send 1 notification package to #{@host}" if @logging
     end
   end
   
@@ -82,6 +85,7 @@ module APNS
         conn.write(self.packaged_notification(n[0], n[1], (n[2] or rand(9999)), (n[3] or (Time.now + 1.year))))
       end
       conn.flush
+      puts "[APNS] sent #{notifications.count} notification package(s) to #{@host}" if @logging
     end
   end
   
@@ -139,7 +143,7 @@ module APNS
     else
       raise "Message needs to be either a hash or string"
     end
-    hash = Truncate.truncate_notification(hash, @clean_whitespace, @truncate_mode, @truncate_max_chopped)
+    hash = Truncate.truncate_notification(hash, @message_clean_whitespace, @truncate_mode, @truncate_soft_max_chopped, @truncate_ellipsis_str)
     ApnsJSON.apns_json(hash)
   end
   

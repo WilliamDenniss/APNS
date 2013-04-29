@@ -25,6 +25,8 @@ require 'spec_helper'
 
 describe APNS do
 
+  APNS.logging = false
+
   it "should encode unicode to ascii-only json" do
     string = "\u2601"
     json = ApnsJSON.apns_json([string])

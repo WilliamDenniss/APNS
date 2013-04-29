@@ -20,7 +20,7 @@ sudo gem install gs-apns
 h3. Gemfile
 
 <pre>
-gem "gs-apns", "~> 0.2.0"
+gem "gs-apns", "~> 1.0.0"
 </pre>
 
 Bleeding edge:
@@ -94,22 +94,24 @@ APNS.pass = 'xxxx'
 #######################
 
 # soft (word break), or hard truncation (default: Truncate::TRUNCATE_METHOD_SOFT).
-APNS.truncate_mode = Truncate::TRUNCATE_METHOD_HARD
+APNS.truncate_mode = APNS::Truncate::TRUNCATE_METHOD_SOFT
 
-# for soft truncation, the maximum number of characters that will be chopped (default: 10)
-APNS.truncate_max_chopped = 20
+# for soft truncation, the maximum number of characters that will be chopped (default: 15)
+APNS.truncate_soft_max_chopped = 15
 
-# if true (default: true), replaces all whitespace characters with spaces. 
-# e.g. '\n' becomes a single space. '\n\t\n \n' becomes a single space.
-APNS.clean_whitespace = false
+# if true (default: false), replaces all whitespace characters in the message with single spaces. 
+# e.g. "\n" becomes " ", and "\n\t\n \n" becomes " ".
+APNS.message_clean_whitespace = false
 
+# when a message is truncated, this string is written to the end. Defaults to … (the unicode ellipsis)
+APNS.truncate_ellipsis_str = "\u2026"
 
 #######################
-# Message trunctation
+# Logging
 #######################
 
-# if true (default: true), will output 1 log message every time a message is sent to the APNS service
-APNS.logging = false
+# if true (default: true), will output 1 log message for every notification in a batch, and 1 message for the batch
+APNS.logging = true
 
 </pre>
 

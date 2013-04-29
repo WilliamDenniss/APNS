@@ -31,7 +31,7 @@ module APNS
     NOTIFICATION_MAX_BYTE_SIZE = 256
   
     # forces a notification to fit within Apple's payload limits by truncating the message as required
-    def self.truncate_notification(notification, clean_whitespace = true, truncate_mode = TRUNCATE_METHOD_SOFT, truncate_soft_max_chopped = 10)
+    def self.truncate_notification(notification, clean_whitespace = true, truncate_mode = TRUNCATE_METHOD_SOFT, truncate_soft_max_chopped = 10, ellipsis = "\u2026")
       
       raise ArgumentError, "notification is not a hash" unless notification.is_a?(Hash)
       raise ArgumentError, "notification hash should contain :aps key" unless notification[:aps]
@@ -54,7 +54,7 @@ module APNS
           raise TrucateException, "notification would only fit within 256 byte limit by completely truncating the message which changes the presentation in iOS"
         end
 
-        notification[:aps][:alert] = truncate_string(notification[:aps][:alert], message_target_byte_size, truncate_mode, truncate_soft_max_chopped)
+        notification[:aps][:alert] = truncate_string(notification[:aps][:alert], message_target_byte_size, truncate_mode, truncate_soft_max_chopped, ellipsis)
       end
       
       return notification
