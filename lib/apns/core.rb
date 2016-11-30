@@ -52,8 +52,10 @@ module APNS
   
   @logging = true
 
+  @byte_limit = 2048
+
   class << self
-    attr_accessor :host, :port, :feedback_host, :feedback_port, :pem, :pass, :cache_connections, :message_clean_whitespace, :truncate_mode, :truncate_soft_max_chopped, :truncate_ellipsis_str, :logging
+    attr_accessor :host, :port, :feedback_host, :feedback_port, :pem, :pass, :cache_connections, :message_clean_whitespace, :truncate_mode, :truncate_soft_max_chopped, :truncate_ellipsis_str, :logging, :byte_limit
   end
 
   def self.establish_notification_connection
@@ -121,7 +123,7 @@ module APNS
   def self.packaged_notification(device_token, message, identifier, expiry)
     pt = self.packaged_token(device_token)
     pm = self.packaged_message(message)
-    raise APNSException, "payload exceeds 256 byte limit" if pm.bytesize > 256
+    raise APNSException, "payload exceeds #{@byte_limit} byte limit" if pm.bytesize > @byte_limit
 
     #return [0, 32, pt, pm.bytesize, pm].pack("cna*na*") # old format (NB. s> notation only compatible with ruby 1.9.3 and above)
 
@@ -143,7 +145,7 @@ module APNS
     else
       raise "Message needs to be either a hash or string"
     end
-    hash = Truncate.truncate_notification(hash, @message_clean_whitespace, @truncate_mode, @truncate_soft_max_chopped, @truncate_ellipsis_str)
+    hash = Truncate.truncate_notification(hash, @message_clean_whitespace, @truncate_mode, @truncate_soft_max_chopped, @truncate_ellipsis_str, @byte_limit)
     ApnsJSON.apns_json(hash)
   end
   
