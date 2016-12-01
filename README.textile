@@ -4,11 +4,11 @@ gs-apns is a gem for accessing the Apple Push Notification Service that allows b
 
 Improvements in *gs-apns*, by William Denniss of "Geospike":http://geospike.com/ :
 
-# Automatic truncation of messages to fit within the 256 byte limit, and an exception thrown if the server payload is too big (better than dying silently)
+# Automatic truncation of messages to fit within the 2048 byte limit, and an exception thrown if the server payload is too big (better than dying silently)
 # Truncation can truncate on word or character boundaries, and UTF-8 is fully supported (specifically, Chinese/Japanese character messages are supported)
 # JSON generation uses the JSON gem directly rather than to_json which is overridden by Rails with the potential for "bugs to be introduced":http://omegadelta.net/2013/04/28/changes-to-how-rails-3-2-13-and-4-0-encodes-unicode-in-json/ .
 # Uses Apple's new 'enhanced' notification protocol allowing for an expiration date to be sent on notifications
-# All 256 of available notification payload can be used (jtv-apns & apns are currently limited to 255)
+# All 2048 of available notification payload can be used (jtv-apns & apns are currently limited to 255)
 
 
 h2. Install

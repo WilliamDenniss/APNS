@@ -26,6 +26,7 @@ require 'spec_helper'
 describe APNS do
 
   APNS.logging = false
+  APNS.byte_limit = 256
 
   it "should encode unicode to ascii-only json" do
     string = "\u2601"

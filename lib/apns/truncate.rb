@@ -28,10 +28,8 @@ module APNS
     TRUNCATE_METHOD_SOFT = 'soft'
     TRUNCATE_METHOD_HARD = 'hard'
   
-    NOTIFICATION_MAX_BYTE_SIZE = 256
-  
     # forces a notification to fit within Apple's payload limits by truncating the message as required
-    def self.truncate_notification(notification, clean_whitespace = true, truncate_mode = TRUNCATE_METHOD_SOFT, truncate_soft_max_chopped = 10, ellipsis = "\u2026")
+    def self.truncate_notification(notification, clean_whitespace = true, truncate_mode = TRUNCATE_METHOD_SOFT, truncate_soft_max_chopped = 10, ellipsis = "\u2026", byte_limit = 256)
       
       raise ArgumentError, "notification is not a hash" unless notification.is_a?(Hash)
       raise ArgumentError, "notification hash should contain :aps key" unless notification[:aps]
@@ -41,17 +39,17 @@ module APNS
       # cleans up whitespace
       notification[:aps][:alert].gsub!(/([\s])+/, " ") if clean_whitespace
                 
-      # wd: trims the notification payload to fit in 255 bytes
-      if ApnsJSON.apns_json_size(notification) > NOTIFICATION_MAX_BYTE_SIZE
+      # wd: trims the notification payload to fit in 2048 bytes
+      if ApnsJSON.apns_json_size(notification) > byte_limit
 
-        oversize_by = ApnsJSON.apns_json_size(notification) - NOTIFICATION_MAX_BYTE_SIZE
+        oversize_by = ApnsJSON.apns_json_size(notification) - byte_limit
         message_target_byte_size = ApnsJSON.apns_json_size(notification[:aps][:alert]) - oversize_by
 
         if message_target_byte_size < 0
-          raise TrucateException, "notification does not fit within 256 byte limit even by if the message was completely truncated"
+          raise TrucateException, "notification does not fit within #{byte_limit} byte limit even by if the message was completely truncated"
         end
         if message_target_byte_size == 0
-          raise TrucateException, "notification would only fit within 256 byte limit by completely truncating the message which changes the presentation in iOS"
+          raise TrucateException, "notification would only fit within #{byte_limit} byte limit by completely truncating the message which changes the presentation in iOS"
         end
 
         notification[:aps][:alert] = truncate_string(notification[:aps][:alert], message_target_byte_size, truncate_mode, truncate_soft_max_chopped, ellipsis)
